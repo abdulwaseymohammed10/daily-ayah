@@ -60,6 +60,7 @@
       <label class="row" id="surah-row" hidden>Surah <select id="surah"></select></label>
       <p class="help" id="pool-info"></p>
 
+      <div id="timeline">
       <h2>Each verse stays for</h2>
       <div class="chips" id="every" role="radiogroup" aria-label="Each verse stays for">
         <button role="radio" data-value="1">1 day</button>
@@ -77,6 +78,9 @@
         <button role="radio" data-value="shuffle">Shuffled</button>
         <button role="radio" data-value="ordered">Quran order</button>
       </div>
+      </div>
+      <p class="help" id="timeline-note" hidden>Photo Shuffle changes the wallpaper every day in random order.
+        To keep a verse for a week or follow Quran order, choose Exact order in the Save tab.</p>
       <label class="row" id="longer-row">Allow longer verses <input id="longer" type="checkbox"></label>
       <button class="secondary" id="reshuffle">Pick a new set for me</button>
     </section>
@@ -135,50 +139,83 @@
     </section>
 
     <section class="panel" id="panel-save" role="tabpanel" aria-labelledby="tab-save" hidden>
-      <h2>Make wallpapers for</h2>
-      <div class="chips" id="length" role="radiogroup" aria-label="Make wallpapers for">
-        <button role="radio" data-value="1">Just today</button>
-        <button role="radio" data-value="7">1 week</button>
-        <button role="radio" data-value="30">1 month</button>
-        <button role="radio" data-value="90">3 months</button>
-        <button role="radio" data-value="366">1 year, repeats</button>
-        <button role="radio" data-value="custom">Custom</button>
+      <h2>How it changes each day</h2>
+      <div class="segments" id="method" role="radiogroup" aria-label="How it changes each day">
+        <button role="radio" data-value="shuffle">Easy</button>
+        <button role="radio" data-value="shortcut">Exact order</button>
       </div>
-      <label class="row" id="length-row" hidden>Number of days <input id="length-custom" type="number" inputmode="numeric" min="1" max="364"></label>
-      <p class="help" id="length-info"></p>
 
-      <button class="primary" id="generate">Generate</button>
-      <progress id="progress" max="1" value="0" hidden></progress>
-      <p class="help" id="generate-status" role="status"></p>
-      <button class="primary" id="save-pack" hidden>Save to Files</button>
+      <div id="easy">
+        <p class="help">No Shortcut needed. iPhone's own Photo Shuffle shows a different one each day, in random order.</p>
+        <h2>How many wallpapers</h2>
+        <div class="chips" id="count" role="radiogroup" aria-label="How many wallpapers">
+          <button role="radio" data-value="7">7</button>
+          <button role="radio" data-value="14">14</button>
+          <button role="radio" data-value="30">30</button>
+          <button role="radio" data-value="50">50, the most</button>
+        </div>
+        <p class="help" id="count-info"></p>
+        <button class="primary" id="make-photos">Make wallpapers</button>
+        <progress id="photos-progress" max="1" value="0" hidden></progress>
+        <p class="help" id="photos-status" role="status"></p>
+        <button class="primary" id="save-photos" hidden>Save to Photos</button>
+
+        <ol class="steps">
+          <li>Tap <b>Make wallpapers</b>, then <b>Save to Photos</b>, then <b>Save Images</b>.</li>
+          <li>Touch and hold the Lock Screen, tap <b>+</b>, then <b>Photo Shuffle</b>.</li>
+          <li>Tap <b>Select Photos Manually</b>, pick the new wallpapers at the end of Recents, tap <b>Add</b>.</li>
+          <li>Set Shuffle Frequency to <b>Daily</b>, tap <b>Add</b>, then <b>Set as Wallpaper Pair</b>.</li>
+        </ol>
+        <p class="help">When they run out or you change the look, make new ones and repeat. You can delete the old ones from Photos.</p>
+      </div>
+
+      <div id="exact" hidden>
+        <p class="help">Follows your timeline exactly, like one verse a week. Needs a Shortcut, set up once.</p>
+        <h2>Make wallpapers for</h2>
+        <div class="chips" id="length" role="radiogroup" aria-label="Make wallpapers for">
+          <button role="radio" data-value="1">Just today</button>
+          <button role="radio" data-value="7">1 week</button>
+          <button role="radio" data-value="30">1 month</button>
+          <button role="radio" data-value="90">3 months</button>
+          <button role="radio" data-value="366">1 year, repeats</button>
+          <button role="radio" data-value="custom">Custom</button>
+        </div>
+        <label class="row" id="length-row" hidden>Number of days <input id="length-custom" type="number" inputmode="numeric" min="1" max="364"></label>
+        <p class="help" id="length-info"></p>
+
+        <button class="primary" id="generate">Generate</button>
+        <progress id="progress" max="1" value="0" hidden></progress>
+        <p class="help" id="generate-status" role="status"></p>
+        <button class="primary" id="save-pack" hidden>Save to Files</button>
+        <details id="guide">
+          <summary>Set up the daily change (one time)</summary>
+          <h3>1. Save the pack</h3>
+          <ol>
+            <li>In Files, open <b>On My iPhone</b> and make a folder called <b>Wallpapers</b>.</li>
+            <li>Tap Generate, then Save to Files, and save <b>Ayah.zip</b> in that folder.</li>
+            <li>Tap the zip in Files. A folder called <b>Ayah</b> appears.</li>
+          </ol>
+          <h3>2. Build the Shortcut</h3>
+          <ol>
+            <li>In Shortcuts, tap + and name it <b>Daily Ayah</b>.</li>
+            <li>Add <b>Format Date</b>. Use Current Date, set the format to Custom and type <code>MM-dd</code> (capital MM).</li>
+            <li>Add <b>Get File from Folder</b>. Pick the Wallpapers folder. For the path type <code>Ayah/</code>, insert Formatted Date, then type <code>.jpg</code>. Turn off Error If Not Found.</li>
+            <li>Add <b>If</b>, set to File <b>has any value</b>. Delete Otherwise.</li>
+            <li>Inside the If, add <b>Set Wallpaper Photo</b> with that File. Choose your current wallpaper and Lock Screen only. Turn off Show Preview and Crop to Subject.</li>
+            <li>Press play once and allow everything it asks.</li>
+          </ol>
+          <h3>3. Make it automatic</h3>
+          <p><b>iOS 27:</b> open the Shortcut, tap Edit, then Automation, and add Time of Day, 12:05 AM, Daily. Under the info button, then Privacy, turn on Allow Running When Locked.</p>
+          <p><b>iOS 17 to 26:</b> open Automation, tap +, choose Time of Day, 12:05 AM, Daily, Run Immediately, then pick Daily Ayah.</p>
+          <p>Add a second time, like 8:00 AM, in case the phone was off.</p>
+          <h3>When you change something</h3>
+          <p>Generate again, delete the old Ayah folder and zip, then save and tap the new zip. The Shortcut stays the same.</p>
+          <h3>If it doesn't change</h3>
+          <p>The Lock Screen must be a normal Photo wallpaper, not Photo Shuffle. Check that a Focus isn't switching Lock Screens. After an iOS update, pick the wallpaper again inside the Shortcut.</p>
+        </details>
+        </div>
+
       <button class="secondary" id="save-one">Save only the wallpaper shown</button>
-
-      <details id="guide">
-        <summary>Set up the daily change (one time)</summary>
-        <h3>1. Save the pack</h3>
-        <ol>
-          <li>In Files, open <b>On My iPhone</b> and make a folder called <b>Wallpapers</b>.</li>
-          <li>Tap Generate, then Save to Files, and save <b>Ayah.zip</b> in that folder.</li>
-          <li>Tap the zip in Files. A folder called <b>Ayah</b> appears.</li>
-        </ol>
-        <h3>2. Build the Shortcut</h3>
-        <ol>
-          <li>In Shortcuts, tap + and name it <b>Daily Ayah</b>.</li>
-          <li>Add <b>Format Date</b>. Use Current Date, set the format to Custom and type <code>MM-dd</code> (capital MM).</li>
-          <li>Add <b>Get File from Folder</b>. Pick the Wallpapers folder. For the path type <code>Ayah/</code>, insert Formatted Date, then type <code>.jpg</code>. Turn off Error If Not Found.</li>
-          <li>Add <b>If</b>, set to File <b>has any value</b>. Delete Otherwise.</li>
-          <li>Inside the If, add <b>Set Wallpaper Photo</b> with that File. Choose your current wallpaper and Lock Screen only. Turn off Show Preview and Crop to Subject.</li>
-          <li>Press play once and allow everything it asks.</li>
-        </ol>
-        <h3>3. Make it automatic</h3>
-        <p><b>iOS 27:</b> open the Shortcut, tap Edit, then Automation, and add Time of Day, 12:05 AM, Daily. Under the info button, then Privacy, turn on Allow Running When Locked.</p>
-        <p><b>iOS 17 to 26:</b> open Automation, tap +, choose Time of Day, 12:05 AM, Daily, Run Immediately, then pick Daily Ayah.</p>
-        <p>Add a second time, like 8:00 AM, in case the phone was off.</p>
-        <h3>When you change something</h3>
-        <p>Generate again, delete the old Ayah folder and zip, then save and tap the new zip. The Shortcut stays the same.</p>
-        <h3>If it doesn't change</h3>
-        <p>The Lock Screen must be a normal Photo wallpaper, not Photo Shuffle. Check that a Focus isn't switching Lock Screens. After an iOS update, pick the wallpaper again inside the Shortcut.</p>
-      </details>
 
       <details>
         <summary>Backup and sources</summary>

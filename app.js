@@ -14,6 +14,7 @@ let schedule;
 let photo = null;
 let offset = 0;             // periods after the current one
 let pack = null;            // the last generated file
+let photos = null;          // the last set made for Photo Shuffle
 let job = null;             // the running generation
 let drawQueued = false;
 let noticeTimer = 0;
@@ -65,8 +66,9 @@ function current() {
 function clearPack() {
   if (job) job.cancelled = true;
   pack = null;
-  $('save-pack').hidden = true;
-  $('generate-status').textContent = '';
+  photos = null;
+  $('save-pack').hidden = $('save-photos').hidden = true;
+  $('generate-status').textContent = $('photos-status').textContent = '';
 }
 
 /** restart: the schedule begins again today, so manual picks for the old one are dropped. */
@@ -153,7 +155,12 @@ function setRadio(group, value) {
 
 function syncControls() {
   const s = settings;
-  for (const key of ['order', 'show']) setRadio(key, s[key]);
+  for (const key of ['order', 'show', 'method', 'count']) setRadio(key, s[key]);
+  const easy = s.method === 'shuffle';
+  $('easy').hidden = !easy;
+  $('exact').hidden = easy;
+  $('timeline').hidden = easy;
+  $('timeline-note').hidden = !easy;
   setRadio('sources', s.source);
   setRadio('themes', s.theme);
 
@@ -170,7 +177,7 @@ function syncControls() {
   $('surah-row').hidden = s.source !== 'surah';
   $('surah').value = s.surah;
   $('longer-row').hidden = s.source !== 'any' && s.source !== 'surah';
-  $('reshuffle').hidden = s.order !== 'shuffle';
+  $('reshuffle').hidden = s.order !== 'shuffle' && !easy;
   $('color-options').hidden = s.theme !== 'color';
   $('photo-options').hidden = s.theme !== 'photo';
 
@@ -190,6 +197,10 @@ function syncControls() {
   $('pool-info').textContent = info;
 
   $('length-info').textContent = lengthInfo();
+  const made = Math.min(s.count, count);
+  $('count-info').textContent = count < s.count
+    ? `Only ${count} verse${count === 1 ? '' : 's'} to choose from, so you get ${made}.`
+    : `${made} different verses, a new one each day for ${made} days.`;
 }
 
 function lengthInfo() {
@@ -245,6 +256,8 @@ function bindControls() {
   });
   bindRadio('order', (order) => update({ order }, { restart: true }));
   bindRadio('show', (show) => update({ show }));
+  bindRadio('method', (method) => update({ method, every: method === 'shuffle' ? 1 : settings.every }, { restart: method === 'shuffle' && settings.every !== 1 }));
+  bindRadio('count', (count) => update({ count: Number(count) }));
   bindRadio('themes', (theme) => {
     update({ theme, arColor: '', enColor: '', accent: '' });
     if (theme === 'photo' && !photo) $('photo').click();
@@ -478,6 +491,69 @@ async function generate() {
   }
 }
 
+async function makePhotos() {
+  if (job) {
+    job.cancelled = true;
+    return;
+  }
+  clearPack();
+  const thisJob = { cancelled: false };
+  job = thisJob;
+  const status = $('photos-status');
+  $('make-photos').textContent = 'Cancel';
+  $('photos-progress').hidden = false;
+  $('photos-progress').value = 0;
+  const canvas = document.createElement('canvas');
+  try {
+    const s = structuredClone(settings);
+    await loadFonts(s);
+    const size = screenSize();
+    const refs = core.shuffleSet(schedule, today(), s.count);
+    if (!refs.length) throw new Error('Pick some verses first.');
+    const files = [];
+    for (const [i, ref] of refs.entries()) {
+      if (thisJob.cancelled) break;
+      if (!renderWallpaper(canvas, size, s, core.getVerse(data, ref), photo)) {
+        throw new Error(`${ref} is too long to fit. Change it or show one language.`);
+      }
+      files.push(new File([await toJpeg(canvas)], `Ayah ${ref.replace(':', '-')}.jpg`, { type: 'image/jpeg' }));
+      $('photos-progress').value = (i + 1) / refs.length;
+      status.textContent = `Making ${i + 1} of ${refs.length}`;
+    }
+    if (thisJob.cancelled) {
+      status.textContent = 'Stopped.';
+      return;
+    }
+    photos = files;
+    status.textContent = `${files.length} wallpapers ready. Tap Save to Photos, then Save Images.`;
+    $('save-photos').hidden = false;
+  } catch (error) {
+    status.textContent = error.message || 'Could not finish. Try fewer wallpapers.';
+  } finally {
+    canvas.width = canvas.height = 1;
+    job = null;
+    $('make-photos').textContent = 'Make wallpapers';
+    $('photos-progress').hidden = true;
+  }
+}
+
+async function savePhotos() {
+  if (!photos) return;
+  // On iPhone the share sheet offers "Save Images". Anywhere else, download them as one zip.
+  if (navigator.maxTouchPoints > 0 && navigator.canShare?.({ files: photos })) {
+    try {
+      await navigator.share({ files: photos });
+      return;
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+    }
+  }
+  const entries = await Promise.all(photos.map(async (file) => ({
+    name: file.name, blob: file, crc: crc32(new Uint8Array(await file.arrayBuffer())),
+  })));
+  await saveFile(new File([makeZip(entries)], 'Ayah wallpapers.zip', { type: 'application/zip' }));
+}
+
 function readImage(url) {
   const image = new Image();
   image.src = url;
@@ -536,6 +612,8 @@ async function restore(event) {
 
 function bindSaving() {
   $('generate').addEventListener('click', generate);
+  $('make-photos').addEventListener('click', makePhotos);
+  $('save-photos').addEventListener('click', savePhotos);
   $('save-pack').addEventListener('click', () => pack && saveFile(pack));
   $('save-one').addEventListener('click', async () => {
     const { ref } = current();

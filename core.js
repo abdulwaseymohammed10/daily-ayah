@@ -8,6 +8,8 @@ export const DEFAULTS = {
   longer: false,
   every: 1,               // days each verse stays
   length: 7,              // days to make ahead. 366 = a whole year that repeats
+  method: 'shuffle',      // shuffle = Photo Shuffle, shortcut = exact dates
+  count: 30,              // wallpapers for Photo Shuffle
   seed: 1,
   anchor: '',             // first day of the schedule
   pin: '',
@@ -37,13 +39,14 @@ export const DEFAULTS = {
 const ALLOWED = {
   source: ['popular', 'meaningful', 'topics', 'any', 'surah', 'favorites'],
   order: ['shuffle', 'ordered'],
+  method: ['shuffle', 'shortcut'],
   theme: ['midnight', 'dusk', 'emerald', 'sand', 'black', 'color', 'photo'],
   show: ['both', 'ar', 'en'],
   arFont: ['amiri', 'scheherazade'],
   enFont: ['garamond', 'inter', 'system'],
 };
 const RANGES = {
-  surah: [1, 114], every: [1, 90], length: [1, 366], dim: [0, 90], blur: [0, 100],
+  surah: [1, 114], every: [1, 90], count: [1, 50], length: [1, 366], dim: [0, 90], blur: [0, 100],
   arSize: [60, 125], enSize: [70, 125], position: [-100, 100], seed: [1, 4294967295],
 };
 
@@ -188,6 +191,16 @@ export function makeSchedule(data, s) {
   };
 
   return { pool, at };
+}
+
+/** Different verses for Photo Shuffle, starting with the one shown today. */
+export function shuffleSet(schedule, today, count) {
+  const refs = [];
+  for (let day = today; refs.length < count && day < today + 5000; day++) {
+    const { ref } = schedule.at(day);
+    if (ref && !refs.includes(ref)) refs.push(ref);
+  }
+  return refs;
 }
 
 /** One entry per file in the pack. Names are month-day, so a year pack repeats forever. */

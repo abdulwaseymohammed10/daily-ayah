@@ -1,5 +1,5 @@
 // Works offline after the first open. The network wins when there is one, so updates show up at once.
-const CACHE = 'daily-ayah-v2';
+const CACHE = 'daily-ayah-v3';
 const FILES = ['./', 'app.js', 'core.js', 'render.js', 'zip.js', 'styles.css', 'data/quran.json', 'manifest.webmanifest', 'icon-180.png', 'NOTICE.txt'];
 const FONT_HOST = 'https://fonts.gstatic.com/s/';
 const FONTS = [
